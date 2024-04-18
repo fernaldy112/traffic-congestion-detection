@@ -49,7 +49,7 @@ while cap.isOpened():
     filtered_detections = detections[np.isin(detections.class_id, CLASS_ID)]
     
     vehicle_pixels = filtered_detections.area.sum()
-    vertices = xyxy_to_vertices("midpoint", filtered_detections.xyxy)
+    vertices = xyxy_to_vertices(filtered_detections.xyxy, "midpoint")
     
     n_object = count_object(filtered_detections)
     pixel_ratio = ratio_pixel(vehicle_pixels, road_pixels)
