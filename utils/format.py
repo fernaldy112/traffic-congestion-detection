@@ -1,30 +1,39 @@
 import numpy as np
 
-def xyxy_to_vertices(xyxys: np.ndarray, vertices_type: str = "midpoint"):
+def xyxy_to_vertices(xyxys: np.ndarray, vertices_type: str = "midpoint") -> np.ndarray:
   """
-  Returns array of vertices extracted from xyxy format
+  Returns array of vertices extracted from xyxy format.
   
-  Args:
-    xyxys (ndarray): 2D array in shape of (N, 4) representing boxes in xyxy format
-    vertices_type (str): {"midpoint", "corner"}
+  Parameters
+  ----------
+  xyxys : ndarray 
+    2D array in shape of (N, 4) representing boxes in xyxy format.
+  vertices_type : {"midpoint", "corner"}
+    Type of the vertices, either midpoints or corner points.
     
-  Returns:
-    ndarray: Array of vertices in shape of (N, 1, 2) representing bounding boxes
+  Returns
+  -------
+  ndarray
+    Array of vertices in shape of (N, 1, 2) representing boxes.
   """
   if vertices_type == "corner":
     return xyxy_to_corners(xyxys)
   elif vertices_type == "midpoint":
     return xyxy_to_midpoints(xyxys)
 
-def xyxy_to_corners(xyxys: np.ndarray):
+def xyxy_to_corners(xyxys: np.ndarray) -> np.ndarray:
   """
-  Returns array of corners extracted from xyxy format
+  Returns array of corner points extracted from xyxy format.
   
-  Args:
-    xyxys (ndarray): 2D array in shape of (N, 4) representing boxes in xyxy format
+  Parameters
+  ----------
+  xyxys : ndarray 
+    2D array in shape of (N, 4) representing boxes in xyxy format.
     
-  Returns:
-    ndarray: Array of vertices in shape of (N, 1, 2) representing bounding boxes
+  Returns
+  -------
+  ndarray
+    Array of corner points in shape of (N, 1, 2) representing boxes.
   """
   points = np.array([], dtype=np.float32)
   for xyxy in xyxys:
@@ -35,15 +44,19 @@ def xyxy_to_corners(xyxys: np.ndarray):
     points = np.append(points, [top_left, top_right, bottom_right, bottom_left])
   return np.array(points).reshape(-1, 1, 2)
 
-def xyxy_to_midpoints(xyxys: np.ndarray):
+def xyxy_to_midpoints(xyxys: np.ndarray) -> np.ndarray:
   """
-  Returns array of midpoints extracted from xyxy format
+  Returns array of midpoints extracted from xyxy format.
   
-  Args:
-    xyxys (ndarray): 2D array in shape of (N, 4) representing boxes in xyxy format
+  Parameters
+  ----------
+  xyxys : ndarray 
+    2D array in shape of (N, 4) representing boxes in xyxy format.
     
-  Returns:
-    ndarray: Array of midpoints in shape of (N, 1, 2) representing bounding boxes
+  Returns
+  -------
+  ndarray
+    Array of midpoints in shape of (N, 1, 2) representing boxes.
   """
   points = np.array([], dtype=np.float32)
   for xyxy in xyxys:

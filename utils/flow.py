@@ -1,13 +1,17 @@
 import supervision as sv
 
-def count_object(detections: sv.Detections):
+def count_object(detections: sv.Detections) -> int:
   """
-  Returns number of bounding boxes
+  Returns number of bounding boxes.
   
-  Args:
-    detections (Detections): Result of object detection with YOLOv8
+  Parameters
+  ----------
+  detections : Detections 
+    Result of object detection with YOLOv8.
     
-  Returns:
-    int: Length of the detections
+  Returns
+  -------
+  int
+    Length of the detections.
   """
   return len(detections)
