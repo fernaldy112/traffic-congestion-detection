@@ -11,7 +11,7 @@ from utils.mask import manual_mask, yolov8_mask, get_yolov8_mask
 from utils.flow import count_object
 from utils.occupancy import ratio_pixel
 from utils.density import glcm_properties
-from utils.velocity import lk_optical_flow
+from utils.velocity import lk_optical_flow, visualize_lk
 
 vehicle_detection_model = ultralytics.YOLO("./models/33.pt")
 vehicle_detection_model.fuse()
@@ -49,20 +49,22 @@ while cap.isOpened():
     filtered_detections = detections[np.isin(detections.class_id, CLASS_ID)]
     
     vehicle_pixels = filtered_detections.area.sum()
-    vertices = xyxy_to_vertices(filtered_detections.xyxy)
-        
+    vertices = xyxy_to_vertices("midpoint", filtered_detections.xyxy)
+    
     n_object = count_object(filtered_detections)
     pixel_ratio = ratio_pixel(vehicle_pixels, road_pixels)
     contrast = glcm_properties(currentFrame_masked_gray, properties=["contrast"])
-    speed = lk_optical_flow(previousFrame_masked_gray, currentFrame_masked_gray, vertices, currentFrame_masked)
+    a, b, speed = lk_optical_flow(previousFrame_masked_gray, currentFrame_masked_gray, vertices)
+    
+    cv2.imshow("YOLOv8 Inference", resize(visualize_lk(currentFrame_masked, a, b)))
     
     # annotated_frame = results[0].plot()
-    bounding_box_annotator = sv.BoundingBoxAnnotator()
-    annotated_frame = bounding_box_annotator.annotate(
-      scene = currentFrame_masked.copy(),
-      detections = filtered_detections
-    )
-    cv2.imshow("YOLOv8 Inference", resize(annotated_frame))
+    # bounding_box_annotator = sv.BoundingBoxAnnotator()
+    # annotated_frame = bounding_box_annotator.annotate(
+    #   scene = currentFrame_masked.copy(),
+    #   detections = filtered_detections
+    # )
+    # cv2.imshow("YOLOv8 Inference", resize(annotated_frame))
     
   elif (frame_count + 1) % 30 == 0:
     previousFrame_masked_gray = to_grayscale(yolov8_mask(currentFrame, mask)[0])
