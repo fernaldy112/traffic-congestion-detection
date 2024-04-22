@@ -16,5 +16,4 @@ def ratio_pixel(vehicle_pixels: float, road_pixels: int) -> float:
   float
     Division result between sum of area of all boxes and area of the road.
   """
-  return vehicle_pixels / road_pixels
-  # TODO: if no boxes detected, sum_area = 0, division result is float 0.0 so it does not have item() method; recreate by masking non road area
+  return min(1, vehicle_pixels / road_pixels)
