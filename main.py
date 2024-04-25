@@ -2,6 +2,7 @@ import ultralytics
 import supervision as sv
 import cv2
 import numpy as np
+import pandas as pd
 
 from constants.masks import braga_mask_vertices
 
@@ -13,16 +14,14 @@ from utils.occupancy import ratio_pixel
 from utils.density import glcm_properties
 from utils.velocity import lk_optical_flow, visualize_lk
 
-vehicle_detection_model = ultralytics.YOLO("./models/33.pt")
+vehicle_detection_model = ultralytics.YOLO("./models/vehicle_detection.pt")
 vehicle_detection_model.fuse()
 
 road_segmentation_model = ultralytics.YOLO("./models/road_segmentation.pt")
 
-SOURCE_VIDEO_PATH = "./videos/braga1.mp4"
-CLASS_NAMES_DICT = vehicle_detection_model.model.names
-# CLASS_ID = [2, 3, 5, 7] # car, motorcycle, bus, truck
-CLASS_ID = [0]
-video_info = sv.VideoInfo.from_video_path(SOURCE_VIDEO_PATH) # unused
+FILENAME = "asiaafrika1"
+SOURCE_VIDEO_PATH = f"./videos/{FILENAME}.mp4"
+CONFIDENCE_THRESHOLD = 0.7
 
 cap = cv2.VideoCapture(SOURCE_VIDEO_PATH)
 
@@ -46,25 +45,23 @@ while cap.isOpened():
     
     results = vehicle_detection_model(currentFrame_masked)
     detections = sv.Detections.from_ultralytics(results[0])
-    filtered_detections = detections[np.isin(detections.class_id, CLASS_ID)]
+    filtered_detections = detections[detections.confidence > CONFIDENCE_THRESHOLD]
     
     vehicle_pixels = filtered_detections.area.sum()
     vertices = xyxy_to_vertices(filtered_detections.xyxy, "midpoint")
     
     n_object = count_object(filtered_detections)
     pixel_ratio = ratio_pixel(vehicle_pixels, road_pixels)
-    contrast = glcm_properties(currentFrame_masked_gray, properties=["contrast"])
+    contrast = glcm_properties(currentFrame_masked_gray, properties=["contrast"])[0]
     a, b, speed = lk_optical_flow(previousFrame_masked_gray, currentFrame_masked_gray, vertices)
     
-    cv2.imshow("YOLOv8 Inference", resize(visualize_lk(currentFrame_masked, a, b)))
-    
     # annotated_frame = results[0].plot()
-    # bounding_box_annotator = sv.BoundingBoxAnnotator()
-    # annotated_frame = bounding_box_annotator.annotate(
-    #   scene = currentFrame_masked.copy(),
-    #   detections = filtered_detections
-    # )
-    # cv2.imshow("YOLOv8 Inference", resize(annotated_frame))
+    bounding_box_annotator = sv.BoundingBoxAnnotator()
+    annotated_frame = bounding_box_annotator.annotate(
+      scene = currentFrame_masked.copy(),
+      detections = filtered_detections
+    )
+    cv2.imshow("YOLOv8 Inference", resize(annotated_frame))
     
   elif (frame_count + 1) % 30 == 0:
     previousFrame_masked_gray = to_grayscale(yolov8_mask(currentFrame, mask)[0])
