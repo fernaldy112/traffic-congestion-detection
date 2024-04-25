@@ -29,17 +29,18 @@ def lk_optical_flow(old_frame: np.ndarray, new_frame: np.ndarray, old_points: np
   
   new_points, status, error = cv2.calcOpticalFlowPyrLK(old_frame, new_frame, old_points, None, **lk_params)
   
+  if new_points is None:
+    return np.array([]), np.array([]), np.float32(0)
+  
   good_new = new_points[status == 1]
   good_old = old_points[status == 1]
   
-  print(type(good_new))
-  print(type(good_old))
+  if len(good_new) == 0:
+    return good_new, good_old, np.float32(0)
   
   velocities = good_new - good_old
   speeds = np.linalg.norm(velocities, axis=1)
   average_speed = np.average(speeds)
-  
-  print(type(average_speed))
   
   return good_new, good_old, average_speed
 
