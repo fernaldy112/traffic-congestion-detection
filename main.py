@@ -19,9 +19,10 @@ vehicle_detection_model.fuse()
 
 road_segmentation_model = ultralytics.YOLO("./models/road_segmentation.pt")
 
-FILENAME = "asiaafrika1"
+FILENAME = "pasteur2"
 SOURCE_VIDEO_PATH = f"./videos/{FILENAME}.mp4"
 CONFIDENCE_THRESHOLD = 0.7
+OBJECT_RATIO_THRESHOLD = 0.7
 
 cap = cv2.VideoCapture(SOURCE_VIDEO_PATH)
 
@@ -46,6 +47,7 @@ while cap.isOpened():
     results = vehicle_detection_model(currentFrame_masked)
     detections = sv.Detections.from_ultralytics(results[0])
     filtered_detections = detections[detections.confidence > CONFIDENCE_THRESHOLD]
+    filtered_detections = filtered_detections[filtered_detections.area < OBJECT_RATIO_THRESHOLD * road_pixels]
     
     vehicle_pixels = filtered_detections.area.sum()
     vertices = xyxy_to_vertices(filtered_detections.xyxy, "midpoint")
