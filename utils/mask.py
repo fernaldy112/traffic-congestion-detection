@@ -88,11 +88,3 @@ def merge_masks(masks: list, shape: tuple) -> np.ndarray:
   for mask in masks:
     merged_mask = cv2.bitwise_or(merged_mask, mask)
   return merged_mask
-
-def nonZeroCounter(mask): #TODO: delete
-  count = 0
-  for i in range(len(mask)):
-    for j in range(len(mask[i])):
-      if mask[i][j] != 0:
-        count += 1
-  return count
