@@ -23,7 +23,7 @@ def lk_optical_flow(old_frame: np.ndarray, new_frame: np.ndarray, old_points: np
   average_speed : float32
     Average speed of the points calculated from the obtained optical flow.
   """
-  lk_params = dict(winSize = (50, 50), 
+  lk_params = dict(winSize = (25, 25), 
                    maxLevel = 2, 
                    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
   
