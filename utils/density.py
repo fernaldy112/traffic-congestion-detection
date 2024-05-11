@@ -1,7 +1,7 @@
 import numpy as np
 from skimage.feature import graycomatrix, graycoprops
 
-def glcm_properties(frame_gray: np.ndarray, properties: list = ["contrast"], distances: list = [1], angles: list = [0, np.pi/4, np.pi/2, 3*np.pi/4], symmetric: bool = True, normed: bool = True) -> np.ndarray:
+def glcm_properties(frame_gray: np.ndarray, properties: list = ["correlation"], distances: list = [1], angles: list = [0, np.pi/4, np.pi/2, 3*np.pi/4], symmetric: bool = True, normed: bool = True) -> np.ndarray:
   """
   Returns an array of mean value of each texture property from the grayscale input frame.
   
@@ -9,7 +9,7 @@ def glcm_properties(frame_gray: np.ndarray, properties: list = ["contrast"], dis
   ----------
   frame_gray : ndarray
     A grayscale image to be analyzed.
-  properties : list, default ["contrast"]
+  properties : list, default ["correlation"]
     List of GLCM properties to be analyzed from the image. Valid properties are 
     contrast, dissimilarity, homogeneity, ASM, energy, and correlation.
   distances : list, default [1]
