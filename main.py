@@ -7,7 +7,7 @@ import joblib
 from tensorflow.keras.models import load_model
 
 from utils.format import xyxy_to_vertices
-from utils.core import resize, to_grayscale
+from utils.core import resize, to_grayscale, label_frame
 from utils.mask import yolov8_mask, get_yolov8_mask
 from utils.flow import count_object
 from utils.occupancy import ratio_pixel
@@ -79,7 +79,7 @@ while cap.isOpened():
     # annotated_frame = resize(annotated_frame)
     
     annotated_frame = resize(currentFrame)
-    cv2.putText(annotated_frame, prediction, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    label_frame(annotated_frame, prediction)
     
     cv2.imshow("YOLOv8 Inference", annotated_frame)
     
