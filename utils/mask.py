@@ -42,7 +42,7 @@ def get_yolov8_mask(frame: np.ndarray, model: ultralytics.YOLO) -> np.ndarray:
   """
   result = model(frame)[0]
   height, width, _ = frame.shape
-  masks = [cv2.resize(mask.numpy()*255, (width, height)).astype(np.uint8) for mask in result.masks.data]
+  masks = [cv2.resize(mask.cpu().numpy()*255, (width, height)).astype(np.uint8) for mask in result.masks.data]
   merged_mask = merge_masks(masks, (height, width))
   return merged_mask
 
