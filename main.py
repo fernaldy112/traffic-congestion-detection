@@ -3,6 +3,7 @@ import supervision as sv
 import cv2
 import numpy as np
 import joblib
+import argparse
 
 from tensorflow.keras.models import load_model
 
@@ -14,7 +15,13 @@ from utils.occupancy import ratio_pixel
 from utils.density import glcm_properties
 from utils.velocity import lk_optical_flow, visualize_lk
 
-vehicle_detection_model = ultralytics.YOLO("./models/vehicle_detection.pt")
+parser = argparse.ArgumentParser(description="A simple script to demonstrate argparse usage.")
+parser.add_argument("-f", "--file", type=str, help="Input file path", required=True)
+
+args = parser.parse_args()
+FILENAME = args.file
+
+vehicle_detection_model = ultralytics.YOLO("./models/vehicle_detection_nano.pt")
 vehicle_detection_model.fuse()
 
 road_segmentation_model = ultralytics.YOLO("./models/road_segmentation.pt")
@@ -22,7 +29,6 @@ road_segmentation_model = ultralytics.YOLO("./models/road_segmentation.pt")
 classification_model = load_model("./models/classification.h5")
 scaler = joblib.load("./models/scaler.pkl")
 
-FILENAME = ""
 SOURCE_VIDEO_PATH = f"./videos/{FILENAME}.mp4"
 
 cap = cv2.VideoCapture(SOURCE_VIDEO_PATH)
@@ -36,6 +42,8 @@ mask = get_yolov8_mask(previousFrame, road_segmentation_model)
 previousFrame_masked_gray = to_grayscale(yolov8_mask(previousFrame, mask)[0])
 _, _ = cap.read()
 
+cv2.imshow("Mask", resize(mask, new_width=600))
+
 frame_count = 0
 
 while cap.isOpened():
@@ -48,7 +56,7 @@ while cap.isOpened():
     currentFrame_masked, road_pixels = yolov8_mask(currentFrame, mask)
     currentFrame_masked_gray = to_grayscale(currentFrame_masked)
     
-    results = vehicle_detection_model(currentFrame_masked)
+    results = vehicle_detection_model(currentFrame_masked, device=0)
     detections = sv.Detections.from_ultralytics(results[0])
     filtered_detections = detections[detections.confidence > CONFIDENCE_THRESHOLD]
     filtered_detections = filtered_detections[filtered_detections.area < OBJECT_RATIO_THRESHOLD * road_pixels]
@@ -76,12 +84,16 @@ while cap.isOpened():
       detections = filtered_detections
     )
     
-    # annotated_frame = resize(annotated_frame)
+    annotated_frame = resize(annotated_frame, new_width=600)
+    cv2.imshow("Segmentation and Detection", annotated_frame)
     
-    annotated_frame = resize(currentFrame)
-    label_frame(annotated_frame, prediction)
-    
-    cv2.imshow("YOLOv8 Inference", annotated_frame)
+    labeled_frame = resize(currentFrame, new_width=700)
+    label_frame(labeled_frame, prediction)
+    label_frame(labeled_frame, f"aliran: {flow}", org=(50, 100))
+    label_frame(labeled_frame, f"okupansi: {round(float(occupancy), 3)}", org=(50, 150))
+    label_frame(labeled_frame, f"kepadatan: {round(float(density), 3)}", org=(50, 200))
+    label_frame(labeled_frame, f"kecepatan: {round(float(velocity), 3)}", org=(50, 250))
+    cv2.imshow("Classification", labeled_frame)
     
   elif (frame_count + 2) % FRAME_INTERVAL == 0:
     previousFrame_masked_gray = to_grayscale(yolov8_mask(currentFrame, mask)[0])
