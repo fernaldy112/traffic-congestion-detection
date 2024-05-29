@@ -45,7 +45,7 @@ def label_frame(frame: np.ndarray,
                 size: int = 1, 
                 font_color: tuple = (255, 255, 255), 
                 background_color: tuple = (0, 0, 0), 
-                thickness: int = 2, 
+                thickness: int = 1, 
                 line_type: int = cv2.LINE_AA
                 ) -> bool:
   """
@@ -63,7 +63,7 @@ def label_frame(frame: np.ndarray,
     Padding of the background.
   font : int, default cv2.FONT_HERSHEY_SIMPLEX 
     Font type of the label.
-  size : int, default 1 
+  size : int, default 1
     Font scale factor.
   font_color : tuple, default (255, 255, 255) 
     Color of the label.
