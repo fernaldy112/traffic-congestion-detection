@@ -69,7 +69,7 @@ def label_frame(frame: np.ndarray,
     Color of the label.
   background_color : tuple, default (0, 0, 0) 
     Color of the background.
-  thickness : int, default 2 
+  thickness : int, default 1 
     Thickness of the label.
   line_type : int, default cv2.LINE_AA 
     Type of the line.

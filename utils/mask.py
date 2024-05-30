@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import ultralytics
+from typing import Union
 
 def manual_mask(frame: np.ndarray, vertices: np.ndarray) -> np.ndarray:
   """
@@ -24,7 +25,7 @@ def manual_mask(frame: np.ndarray, vertices: np.ndarray) -> np.ndarray:
   result = cv2.bitwise_and(frame, frame, mask=mask)
   return result, non_zero_pixels
 
-def get_yolov8_mask(frame: np.ndarray, model: ultralytics.YOLO) -> np.ndarray:
+def get_yolov8_mask(frame: np.ndarray, model: ultralytics.YOLO, device: Union[int, str] = "cpu") -> np.ndarray:
   """
   Returns a mask for a frame predicted by yolov8 model.
   
@@ -34,13 +35,15 @@ def get_yolov8_mask(frame: np.ndarray, model: ultralytics.YOLO) -> np.ndarray:
     The frame used as input for the prediction model.
   model : YOLO
     A yolov8 segmentation model used to predict mask for the input frame.
+  device : {0, "cpu"}, default "cpu"
+    Device used for segmentation.
     
   Returns
   -------
   ndarray
     Mask for the input frame.
   """
-  result = model(frame)[0]
+  result = model(frame, device=device)[0]
   height, width, _ = frame.shape
   masks = [cv2.resize(mask.cpu().numpy()*255, (width, height)).astype(np.uint8) for mask in result.masks.data]
   merged_mask = merge_masks(masks, (height, width))
