@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import joblib
 import argparse
+import time
 
 from typing import Union
 from tensorflow.keras.models import load_model, Sequential
@@ -22,7 +23,8 @@ def process_video(filename: str,
                   road_segmentation_model: ultralytics.YOLO, 
                   classification_model: Sequential, 
                   scaler: StandardScaler, 
-                  device: Union[int, str]):
+                  device: Union[int, str], 
+                  is_live: bool):
   """
   Process a video frame by frame to detect traffic congestion.
   
@@ -40,8 +42,13 @@ def process_video(filename: str,
     Model for features scaling before classification.
   device : {0, "cpu"}
     Device for vehicle detection and road segmentation.
+  is_live : bool
+    True if the video is from a live source.
   """
-  SOURCE_VIDEO_PATH = f"./videos/{filename}.mp4"
+  if is_live:
+    SOURCE_VIDEO_PATH = filename
+  else:
+    SOURCE_VIDEO_PATH = f"./videos/{filename}.mp4"
 
   cap = cv2.VideoCapture(SOURCE_VIDEO_PATH)
 
@@ -65,10 +72,15 @@ def process_video(filename: str,
       break
     
     if frame_count % FRAME_INTERVAL == 0:
+      start_time = time.time()
       currentFrame_masked, road_pixels = yolov8_mask(currentFrame, mask)
       currentFrame_masked_gray = to_grayscale(currentFrame_masked)
       
       results = vehicle_detection_model(currentFrame_masked, device=device)
+      
+      vehicle_detection_speed = results[0].speed
+      vehicle_detection_time = vehicle_detection_speed["preprocess"] + vehicle_detection_speed["inference"] + vehicle_detection_speed["postprocess"]
+      
       detections = sv.Detections.from_ultralytics(results[0])
       filtered_detections = detections[detections.confidence > CONFIDENCE_THRESHOLD]
       filtered_detections = filtered_detections[filtered_detections.area < OBJECT_RATIO_THRESHOLD * road_pixels]
@@ -89,6 +101,9 @@ def process_video(filename: str,
         prediction = "lambat"
       elif prediction == 2:
         prediction = "macet"
+        
+      end_time = time.time()
+      frame_processing_time = (end_time - start_time) * 1000
       
       bounding_box_annotator = sv.BoundingBoxAnnotator()
       annotated_frame = bounding_box_annotator.annotate(
@@ -114,7 +129,7 @@ def process_video(filename: str,
     
     if cv2.waitKey(1) & 0xFF == ord("q"):
       break
-    
+   
   cap.release()
   cv2.destroyAllWindows()
   
@@ -125,11 +140,12 @@ def parse_arguments():
   Returns
   -------
   Namespace
-    Files and device arguments.
+    Files, device, and live arguments.
   """
   parser = argparse.ArgumentParser(description="Traffic congestion detection on CCTV videos.")
   parser.add_argument("-f", "--files", type=str, nargs="+", required=True, help="Input file paths")
-  parser.add_argument("-d", "--device", type=str, choices=["cpu", "gpu"], default="gpu", help="Device to use for object detection and segmentation.")
+  parser.add_argument("-d", "--device", type=str, choices=["cpu", "gpu"], default="gpu", help="Device to use for object detection and road segmentation.")
+  parser.add_argument("-l", "--live", action="store_true", help="Detect traffic congestion from a live source.")
   args = parser.parse_args()
   if args.device == "gpu":
     args.device = 0
@@ -139,18 +155,16 @@ if __name__ == "__main__":
   args = parse_arguments()
   filenames = args.files
   device = args.device
-
-  vehicle_detection_model = ultralytics.YOLO("./models/vehicle_detection.pt")
+  is_live = args.live
+  
+  vehicle_detection_model = ultralytics.YOLO("./models/vehicle_detection_m.pt")
   vehicle_detection_model.fuse()
 
-  road_segmentation_model = ultralytics.YOLO("./models/road_segmentation.pt")
+  road_segmentation_model = ultralytics.YOLO("./models/road_segmentation_s.pt")
 
   classification_model = load_model("./models/classification.h5")
   scaler = joblib.load("./models/scaler.pkl")
-  
-  print(type(classification_model))
-  print(type(scaler))
-  
+    
   for filename in filenames:
-    process_video(filename, vehicle_detection_model, road_segmentation_model, classification_model, scaler, device)
+    process_video(filename, vehicle_detection_model, road_segmentation_model, classification_model, scaler, device, is_live)
   
